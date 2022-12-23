@@ -34,7 +34,7 @@ class Packet():
             self.size = data[0]
         self.items = []
         data_temp = self.data
-        # TODO: System to put all the data in a packet
+        # TODO: System to put all the data in a packet in a list
         # size = 1
         # if data[0] in varint_keys.keys():
         #     size = data[varint_keys[data[0]]]
