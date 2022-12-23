@@ -1,49 +1,81 @@
 import logging
 import socket
 import threading
-import varint
+import io
 
+def get_varint(data: bytes) -> bytes:
+    if type(data) == int:
+        data = data.to_bytes(8, "big")
+    keys = {
+        0xfd: 2,
+        0xfe:  4,
+        0xff:  8
+    }
+    if data[0] < 0xfd:
+        return(data[0:1])
+    elif data[0] in keys.keys():
+        return(data[0:keys[data[0]]+1])
+    else:
+        raise Exception("Something happened. This should not run")
+
+def writeVarint(value: int) -> bytes:
+    byte_value = value.to_bytes(8, 'big')[::-1]
+    while byte_value.endswith(b'\x00'):
+        byte_value = byte_value.removesuffix(b'\x00')
+    if value <= 0xfc:
+        a = byte_value
+    elif value <= 0xffff:
+        a = b'\xfd'.join([b"",byte_value])
+    elif value <= 0xffffffff:
+        a = b'\xfe'.join([b"",byte_value])
+    elif value <= 0xffffffffffffffff:
+        a = b'\xff'.join([b"",byte_value])
+    else:
+        raise Exception("Value is too big")
+    return(a)
+    
+def read_varint(val: bytes, auto_get_varint=True) -> int:
+    if auto_get_varint:
+        val = get_varint(val)
+    value = int.from_bytes(val,"big")
+    a = 0
+    if value <= 0xfc:
+        a = (val[0])
+    elif value <= 0xffff:
+        a = (val[1:5])
+    elif value <= 0xffffffff:
+        a = (val[1:9])
+    elif value <= 0xffffffffffffffff:
+        a = (val[1:17])
+    else:
+        raise Exception(f"Varint { value } is too big")
+    if type(a) == int:
+        a = a.to_bytes(4, "big")
+    a = int.from_bytes(a, "big")
+    return(a)
 
 class Packet():
-    def create_packet(self, id: int, data: list[bytes]):
+    def create_packet(self, id: bytes, data: list[bytes]):
         data_good = b""
         for i in data:
-            data_good += varint.encode(len(i))
+            data_good += writeVarint(len(i))
             data_good += i
+            logging.warning(f"{writeVarint(len(i))} + {i}")
         self.id = id
         self.data = data_good
-        data_good = id.to_bytes(1, "little") + data_good
-        data_good = varint.encode(len(data_good)) + data_good
+        data_good = id + data_good
+        data_good = writeVarint(len(data_good)) + data_good
         self.items = data
         self.raw_data = data_good
         return(data_good)
     def load_packet(self, data: bytes):
         logging.debug(f"Filling out packet with data {data}")
-        varint_keys = {
-            b"\xfd": 2,
-            b"\xfe": 3,
-            b"\xff": 4,
-        }
-        if data[0] in varint_keys.keys():
-            self.id = data[varint_keys[data[0]]]
-            self.data = data.replace(data[:varint_keys[data[0]]+1], b"")
-            self.size = varint.decode_bytes(data[0:varint_keys[data[0]]])
-        else:
-            self.id = data[1]
-            self.data = data.replace(data[:2], b"")
-            self.size = data[0]
-        self.items = []
-        data_temp = self.data
-        # TODO: System to put all the data in a packet in a list
-        # size = 1
-        # if data[0] in varint_keys.keys():
-        #     size = data[varint_keys[data[0]]]
-        # while len(data_temp) != 0 and len(data_temp) - (size) >= varint.decode_bytes(bytes(1) + data_temp[0:size]):
-        #     d = data_temp[0:varint.decode_bytes(bytes(1) + data_temp[0:size])+1]
-        #     logging.debug(f"\n0:{varint.decode_bytes(data_temp[0:size] + bytes(1))+1}\n{d}\n{ data_temp[0:size]}")
-        #     self.items.append(d)
-        #     data_temp.replace(d, b'')
         self.raw_data = data
+        self.size = read_varint(data)
+        data = data.replace(get_varint(data), bytes(0))
+        self.id = read_varint(data)
+        data = data.replace(get_varint(data), bytes(0))
+        self.data = data
     def __len__(self):
         return(self.size)
 
@@ -67,17 +99,17 @@ class Connection():
         packets = []
         raw_data = packet
         data = packet
-        size = 0
+        size = 1
         varint_keys = {
-            b"\xfd": 1,
-            b"\xfe": 2,
-            b"\xff": 3,
+            b"\xfd": 2,
+            b"\xfe": 4,
+            b"\xff": 8,
         }
         if data[0] in varint_keys.keys():
             size = data[varint_keys[data[0]]]
-        while len(data) != 0 and len(data) - (size+1) >= varint.decode_bytes(data[0:size+1]):
-            varint_length = varint.decode_bytes(data[0:size+1])
-            packet_length = varint.decode_bytes(data[0:varint_length])+1
+        logging.debug(read_varint(data))
+        while len(data) != 0 and len(data) - (size) >= read_varint(data):
+            packet_length = read_varint(data)+1
             logging.debug(f"Getting 0:{packet_length} from {data}")
             packet_data = data[0:packet_length]
             data = data.replace(packet_data, b"")
