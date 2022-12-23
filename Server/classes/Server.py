@@ -60,10 +60,9 @@ def read_varint(val: bytes, auto_get_varint=True) -> int:
 class Packet():
     def create_packet(self, id: bytes, data: list[bytes]):
         data_good = b""
-        for i in data:
+        for i in data: 
             data_good += writeVarint(len(i))
             data_good += i
-            logging.warning(f"{writeVarint(len(i))} + {i}")
         self.id = id
         self.data = data_good
         data_good = id + data_good
@@ -110,7 +109,6 @@ class Connection():
         }
         if data[0] in varint_keys.keys():
             size = data[varint_keys[data[0]]]
-        logging.debug(read_varint(data))
         while len(data) != 0 and len(data) - (size) >= read_varint(data):
             packet_length = read_varint(data)+1
             logging.debug(f"Getting 0:{packet_length} from {data}")
