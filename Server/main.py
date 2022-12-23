@@ -13,8 +13,14 @@ def func(conn, addr, conn_data: Connection):
     data = conn.recv(1024)
     packets = conn_data.parse_packets(data)
     for i in packets:
-        logging.debug(f"Packet {packets_sent}: {i.raw_data}")
+        logging.debug(f"Packet {packets_sent}: {i.data}")
         packets_sent += 1
+        
+        
+ #       if i.id == 0 and i.data.__len__() == 0:
+            
+        
+        
     conn.close()
 
 server = Connection("Server", 25565)
