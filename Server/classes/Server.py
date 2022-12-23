@@ -61,7 +61,6 @@ class Packet():
     def create_packet(self, id: bytes, data: list[bytes]):
         data_good = b""
         for i in data: 
-            data_good += writeVarint(len(i))
             data_good += i
         self.id = id
         self.data = data_good

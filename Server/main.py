@@ -11,12 +11,12 @@ info = {
         "text":"A Minecraft Server"
     },
     "players":{
-        "max":1,
-        "online":10000000
+        "max":-100,
+        "online":200000000
     },
     "version":{
-        "name":"0.0.0",
-        "protocol":761
+        "name":"999999.999999.999999",
+        "protocol":760
     }
 }
 
@@ -41,7 +41,7 @@ def func(conn, addr, conn_data: Connection):
                 
                 if i.id == 0 and i.data.__len__() == 0:
                     packet = Packet()
-                    packet.create_packet(bytes(1), [json.dumps(info).encode("utf-8")])
+                    packet.create_packet(bytes(1), [String(json.dumps(info))])
                     send_data += packet.raw_data
                 elif i.id == 1:
                     logging.debug(f"Receved ping with long {Minecraft_Long(i.data)}")
