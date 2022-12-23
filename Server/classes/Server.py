@@ -32,6 +32,9 @@ def writeVarint(value: int) -> bytes:
         a = b'\xff'.join([b"",byte_value])
     else:
         raise Exception("Value is too big")
+    val = a[len(a)-1:len(a)-1] + b'\x01'
+    a.removesuffix(a[len(a)-1:len(a)-1])
+    a += val
     return(a)
     
 def read_varint(val: bytes, auto_get_varint=True) -> int:
@@ -50,8 +53,8 @@ def read_varint(val: bytes, auto_get_varint=True) -> int:
     else:
         raise Exception(f"Varint { value } is too big")
     if type(a) == int:
-        a = a.to_bytes(4, "big")
-    a = int.from_bytes(a, "big")
+        a = a.to_bytes(4, "little")
+    a = int.from_bytes(a, "little")
     return(a)
 
 class Packet():

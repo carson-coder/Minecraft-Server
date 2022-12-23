@@ -5,7 +5,7 @@
 *$py.class
 
 #Minecraft_Server directiory. This is where you should put you mc server you use for -listen.
-/Minecraft_Server/
+/Minecraft_Server/ 
 
 # C extensions
 *.so
