@@ -44,7 +44,7 @@ def func(conn, addr, conn_data: Connection):
                     packet.create_packet(bytes(1), [String(json.dumps(info))])
                     send_data += packet.raw_data
                 elif i.id == 1:
-                    logging.debug(f"Receved ping with long {Minecraft_Long(i.data)}")
+                    logging.debug(f"Receved ping with long {Long(i.data)}")
                     send_data += i.raw_data
                     
                 
