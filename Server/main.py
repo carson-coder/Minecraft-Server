@@ -8,14 +8,15 @@ from .classes import *
 info = {
     "enforcesSecureChat":True,
     "description":{
-        "text":"A Minecraft Server"
+        "text":"A Minecraft Server",
+        "color": "red"
     },
     "players":{
-        "max":-100,
-        "online":200000000
+            "max":20,
+            "online":0
     },
     "version":{
-        "name":"999999.999999.999999",
+        "name":"The world is totally on fire",
         "protocol":760
     }
 }
@@ -25,11 +26,11 @@ def func(conn, addr, conn_data: Connection):
     packets_sent = 1
     logging.info(f"Connection from {addr[0]}:{addr[1]}")
     while running:
-        try:
-            data = conn.recv(1024)
-        except:
-            running = False
-            break
+        #try:
+        data = conn.recv(1024)
+        #except:
+            #running = False
+            #break
         if data.__len__() != 0:
             logging.debug(f"Receved Data: {data}")
             packets = conn_data.parse_packets(data)
@@ -46,10 +47,12 @@ def func(conn, addr, conn_data: Connection):
                 elif i.id == 1:
                     logging.debug(f"Receved ping with long {Long(i.data)}")
                     send_data += i.raw_data
-                    
-                
                 logging.debug(f"Sending; {send_data}")
                 size = len(send_data)
+                swap = False
+                if swap:
+                    send_data = int.from_bytes(send_data, 'big')
+                    send_data = send_data.to_bytes(size, "little")
                 conn.send(send_data)
     conn.close()
 

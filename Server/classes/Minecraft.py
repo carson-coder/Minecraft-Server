@@ -1,23 +1,25 @@
 from typing import Union
+import logging
 
 def writeVarint(value: int) -> bytes:
-    byte_value = value.to_bytes(8, 'big')[::-1]
-    while byte_value.endswith(b'\x00'):
-        byte_value = byte_value.removesuffix(b'\x00')
-    if value <= 0xfc:
-        a = byte_value
-    elif value <= 0xffff:
-        a = b'\xfd'.join([b"",byte_value])
-    elif value <= 0xffffffff:
-        a = b'\xfe'.join([b"",byte_value])
-    elif value <= 0xffffffffffffffff:
-        a = b'\xff'.join([b"",byte_value])
-    else:
-        raise Exception("Value is too big")
-    val = a[len(a)-1:len(a)-1] + b'\x01'
-    a.removesuffix(a[len(a)-1:len(a)-1])
-    a += val
-    return(a)
+    byte_value_unshift = value.to_bytes(8, 'big')[::-1]
+    while byte_value_unshift.endswith(b'\x00'):
+        byte_value_unshift = byte_value_unshift.removesuffix(b'\x00')
+    byte_value = byte_value_unshift
+    size = byte_value.__len__()
+    keys = [
+        [b'', 0],
+        [b'', 0],
+        [b'\xfd', 2-2],
+        [b'\xfe', 4-3],
+        [b'\xfe', 4-4],
+        [b'\xff', 8-5],
+        [b'\xff', 8-6],
+        [b'\xff', 8-7],
+        [b'\xff', 8-8],
+    ]
+    byte_value = byte_value + bytes(keys[size][1])
+    return(keys[size][0] + byte_value + b'\x01')
 
 class McDatatype():
     def __str__(self) -> int:
@@ -35,7 +37,7 @@ class String(McDatatype):
     def __init__(self, value: str):
         self.value = writeVarint(len(value)) + value.encode("utf-8")
     def __bytes__(self):
-        self.value
+        return(self.value)
 
 class UUID(McDatatype):
     pass
